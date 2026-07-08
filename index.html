@@ -570,10 +570,10 @@ VIEWS.map = async function(el){
     attribution:'&copy; OpenStreetMap contributors',maxZoom:18
   }).addTo(_map);
   try{
-    var r=await supa.from('map_pins').select('*').eq('hidden',false);
+    var r=await supa.from('map_pins').select('lat,lng').eq('hidden',false);
     (r.data||[]).forEach(function(p){
-      L.circleMarker([p.lat,p.lng],{radius:9,color:'#0067FE',weight:3,fillColor:'#FEF700',fillOpacity:.9})
-        .addTo(_map).bindPopup('<b>'+escH(p.label||'Job')+'</b><br>'+escH(p.season||''));
+      L.circleMarker([p.lat,p.lng],{radius:8,color:'#0067FE',weight:3,fillColor:'#FEF700',fillOpacity:.9,interactive:false})
+        .addTo(_map);
     });
     if(!r.data||!r.data.length){
       L.popup().setLatLng(MAP_CENTER).setContent('Map pins coming soon — check back!').openOn(_map);
