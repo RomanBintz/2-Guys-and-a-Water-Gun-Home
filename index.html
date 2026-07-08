@@ -287,8 +287,8 @@ var SUPA_URL = 'https://yhqzdvaleqksqatvawzm.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlocXpkdmFsZXFrc3FhdHZhd3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzYxNjgsImV4cCI6MjA5MTI1MjE2OH0.ALv4QzsnS82B2_Ffhm_gXhqt1Fs4IMyk2AEbr1D89lQ';
 var BUSINESS = {
   name: '2 Guys and a Water Gun',
-  phone: '5804855858',            // <<< EDIT ME: your real phone, digits only
-  phoneDisplay: '(580) 485-5858', // <<< EDIT ME: how it should look on screen
+  phone: '5805551234',            // <<< EDIT ME: your real phone, digits only
+  phoneDisplay: '(580) 555-1234', // <<< EDIT ME: how it should look on screen
   email: '2guywashing@gmail.com',
   area: 'Ponca City & Kay County, OK'
 };
@@ -716,14 +716,14 @@ function renderLogin(el){
   el.innerHTML='<div class="pad">'
     +'<h2 class="section-title">👤 Sign In</h2>'
     +'<div class="card">'
-      +'<p class="muted" style="margin-bottom:4px">No passwords to remember. Enter your email and we\'ll send you a 6-digit code.</p>'
+      +'<p class="muted" style="margin-bottom:4px">No passwords to remember. Enter your email and we\'ll send you a sign-in code.</p>'
       +'<div id="login-step1">'
         +'<label>Your Email</label><input type="email" id="login-email" autocomplete="email" placeholder="you@example.com">'
         +'<button class="big-btn" id="login-send" style="margin-top:16px" onclick="sendCode()">Email Me a Code</button>'
       +'</div>'
       +'<div id="login-step2" style="display:none">'
-        +'<label>Enter the 6-digit code</label>'
-        +'<input type="text" id="login-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" style="text-align:center;font-size:1.6rem;letter-spacing:.35em;font-weight:800">'
+        +'<label>Enter the code from your email</label>'
+        +'<input type="text" id="login-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" style="text-align:center;font-size:1.45rem;letter-spacing:.2em;font-weight:800">'
         +'<button class="big-btn" id="login-verify" style="margin-top:16px" onclick="verifyCode()">Sign In</button>'
         +'<button class="big-btn ghost" style="margin-top:10px" onclick="backToStep1()">Use a different email</button>'
       +'</div>'
@@ -750,7 +750,8 @@ async function sendCode(){
 async function verifyCode(){
   var code=($('login-code').value||'').trim();
   var err=$('login-err');err.style.display='none';
-  if(code.length!==6){err.textContent='Enter the 6-digit code from your email.';err.style.display='block';return;}
+  code=code.replace(/[^0-9]/g,'');
+  if(code.length<6||code.length>10){err.textContent='Enter the code exactly as it appears in your email.';err.style.display='block';return;}
   var btn=$('login-verify');btn.disabled=true;btn.textContent='Checking…';
   var r=await supa.auth.verifyOtp({email:_loginEmail,token:code,type:'email'});
   btn.disabled=false;btn.textContent='Sign In';
@@ -772,25 +773,34 @@ async function doSignOut(){
 async function loadClientData(){
   if(!S.user)return;
   try{
-    var cr=await supa.from('clients').select('*');
+    // Match the client record by the exact sign-in email (case-insensitive).
+    // Never "first row" — the admin account can see all clients, and a
+    // blind first-row grab would impersonate a random customer.
+    var cr=await supa.from('clients').select('*').ilike('email',S.user.email);
     S.client=(cr.data&&cr.data[0])||null;
     if(S.client){
-      var results=await Promise.all([
-        supa.from('invoices').select('*'),
-        supa.from('invoice_items').select('*'),
-        supa.from('estimates').select('*'),
-        supa.from('estimate_items').select('*'),
-        supa.from('recurring').select('*'),
-        supa.from('reward_redemptions').select('*')
+      var res1=await Promise.all([
+        supa.from('invoices').select('*').eq('client_id',S.client.id),
+        supa.from('estimates').select('*').eq('client_id',S.client.id),
+        supa.from('recurring').select('*').eq('client_id',S.client.id),
+        supa.from('reward_redemptions').select('*').eq('client_id',S.client.id)
       ]);
-      S.invoices=results[0].data||[];
-      S.invoice_items=results[1].data||[];
-      S.estimates=results[2].data||[];
-      S.estimate_items=results[3].data||[];
-      S.recurring=results[4].data||[];
-      S.redemptions=results[5].data||[];
+      S.invoices=res1[0].data||[];
+      S.estimates=res1[1].data||[];
+      S.recurring=res1[2].data||[];
+      S.redemptions=res1[3].data||[];
+      var invIds=S.invoices.map(function(i){return i.id;});
+      var estIds=S.estimates.map(function(e){return e.id;});
+      var res2=await Promise.all([
+        invIds.length?supa.from('invoice_items').select('*').in('invoice_id',invIds):Promise.resolve({data:[]}),
+        estIds.length?supa.from('estimate_items').select('*').in('invoice_id',estIds):Promise.resolve({data:[]})
+      ]);
+      S.invoice_items=res2[0].data||[];
+      S.estimate_items=res2[1].data||[];
+    } else {
+      S.invoices=[];S.invoice_items=[];S.estimates=[];S.estimate_items=[];S.recurring=[];S.redemptions=[];
     }
-    var mr=await supa.from('messages').select('*').order('created_at');
+    var mr=await supa.from('messages').select('*').ilike('client_email',S.user.email).order('created_at');
     S.msgs=mr.data||[];
   }catch(e){console.error('load error',e);}
   S.loaded=true;
