@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2 Guys and a Water Gun — Pressure Washing in Ponca City, OK</title>
+<meta name="description" content="House washing, window cleaning, gutter cleaning, and concrete cleaning in Ponca City and Kay County, Oklahoma. Get a free quote from 2 Guys and a Water Gun.">
+<meta name="theme-color" content="#0067FE">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   2 GUYS AND A WATER GUN — BRAND TOKENS
+   Change these once, the whole site follows.
+   (Port this same block into the dashboard for matching style.)
+═══════════════════════════════════════════════════════════ */
+:root{
+  --yellow:#FEF700;        /* logo splash yellow */
+  --blue:#0067FE;          /* logo hydrant blue  */
+  --blue-dark:#0047B3;
+  --ink:#0B2B5B;           /* deep-water navy text */
+  --mist:#EFF5FF;          /* light blue wash background */
+  --white:#FFFFFF;
+  --line:#D8E4F8;
+  --green:#0E9F5B;
+  --red:#D93025;
+  --radius:18px;
+  --font-display:'Anton',Impact,sans-serif;
+  --font-body:'Inter',-apple-system,'Segoe UI',sans-serif;
+  --topbar-h:64px;
+  --bnav-h:74px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:17px}
+body{
+  font-family:var(--font-body);color:var(--ink);background:var(--white);
+  line-height:1.55;padding-top:var(--topbar-h);
+  padding-bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom));
+}
+h1,h2,h3{line-height:1.15}
+.display{font-family:var(--font-display);font-weight:400;text-transform:uppercase;letter-spacing:.01em}
+a{color:var(--blue)}
+img{max-width:100%;display:block}
+button{font-family:var(--font-body)}
+
+/* ── Top bar ── */
+#topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);z-index:900;
+  background:var(--white);border-bottom:3px solid var(--yellow);
+  display:flex;align-items:center;gap:10px;padding:0 14px;
+}
+#topbar .brand{display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0}
+#topbar .brand-name{font-family:var(--font-display);font-size:1.05rem;color:var(--blue);text-transform:uppercase;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#topbar .call-btn{
+  margin-left:auto;background:var(--blue);color:#fff;border:none;border-radius:999px;
+  font-weight:800;font-size:.95rem;padding:11px 18px;cursor:pointer;text-decoration:none;
+  display:flex;align-items:center;gap:7px;flex-shrink:0;
+}
+#topbar .call-btn:active{background:var(--blue-dark)}
+
+/* drop logo mark (SVG inline) */
+.dropmark{width:36px;height:44px;flex-shrink:0}
+
+/* ── Layout helpers ── */
+#main{max-width:760px;margin:0 auto;min-height:60vh}
+.pad{padding:18px 16px}
+.card{background:var(--white);border:2px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.card.mist{background:var(--mist);border-color:transparent}
+.section-title{font-family:var(--font-display);font-size:1.7rem;color:var(--ink);text-transform:uppercase;margin:6px 0 14px}
+.eyebrow{display:inline-block;background:var(--yellow);color:var(--ink);font-weight:800;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-radius:6px;margin-bottom:10px}
+.muted{color:#4A5F85;font-size:.95rem}
+.big-btn{
+  display:block;width:100%;background:var(--blue);color:#fff;border:none;border-radius:14px;
+  font-size:1.15rem;font-weight:800;padding:17px;cursor:pointer;text-align:center;text-decoration:none;
+}
+.big-btn:active{background:var(--blue-dark)}
+.big-btn.yellow{background:var(--yellow);color:var(--ink)}
+.big-btn.ghost{background:var(--white);color:var(--blue);border:2.5px solid var(--blue)}
+.pill{display:inline-block;padding:4px 12px;border-radius:999px;font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.03em}
+.pill.sent{background:var(--yellow);color:var(--ink)}
+.pill.approved,.pill.paid{background:#D5F5E5;color:var(--green)}
+.pill.declined,.pill.overdue{background:#FDE1DF;color:var(--red)}
+.pill.unpaid,.pill.draft{background:var(--mist);color:var(--blue)}
+
+/* ── Hero ── */
+.hero{position:relative;background:var(--blue);color:#fff;overflow:hidden;padding:44px 20px 90px;text-align:center}
+.hero .display{font-size:clamp(2.1rem,8vw,3.4rem);color:#fff}
+.hero .display .yl{color:var(--yellow)}
+.hero p{margin:14px auto 22px;max-width:420px;font-size:1.05rem;color:#DCE9FF}
+.hero .hero-cta{display:inline-block;background:var(--yellow);color:var(--ink);font-weight:800;font-size:1.15rem;padding:16px 34px;border-radius:999px;text-decoration:none;border:none;cursor:pointer}
+.hero::after{ /* clean diagonal wipe */
+  content:'';position:absolute;left:-5%;right:-5%;bottom:-40px;height:90px;
+  background:var(--white);transform:rotate(-3deg);
+}
+.hero .drops{display:flex;justify-content:center;margin-bottom:10px}
+
+/* ── Services strip ── */
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.svc{background:var(--mist);border-radius:var(--radius);padding:16px 14px;text-align:center}
+.svc .em{font-size:1.9rem}
+.svc .nm{font-weight:800;margin-top:6px;font-size:.95rem}
+
+/* ── Punch card ── */
+.punch-wrap{display:flex;justify-content:center;gap:18px;margin:20px 0}
+.punch{width:58px;height:72px;position:relative}
+.punch svg{width:100%;height:100%}
+.punch .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:14px;font-weight:800;color:var(--ink);font-size:1.05rem}
+.punch.filled .num{color:var(--ink)}
+.reward-ready{background:var(--yellow);border-radius:var(--radius);padding:18px;text-align:center;font-weight:800;font-size:1.1rem}
+
+/* ── Forms ── */
+label{display:block;font-weight:700;font-size:.92rem;margin:14px 0 6px}
+input[type=text],input[type=tel],input[type=email],textarea,select{
+  width:100%;padding:14px;border:2px solid var(--line);border-radius:12px;
+  font-size:1.05rem;font-family:var(--font-body);color:var(--ink);background:#fff;
+}
+input:focus,textarea:focus,select:focus{outline:3px solid var(--yellow);border-color:var(--blue)}
+textarea{min-height:110px;resize:vertical}
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check-item{display:flex;align-items:center;gap:9px;background:var(--mist);border-radius:10px;padding:12px;font-weight:600;font-size:.95rem;cursor:pointer}
+.check-item input{width:22px;height:22px;flex-shrink:0}
+.radio-row{display:flex;gap:10px}
+.radio-card{flex:1;text-align:center;border:2.5px solid var(--line);border-radius:12px;padding:13px;font-weight:800;cursor:pointer}
+.radio-card.on{border-color:var(--blue);background:var(--mist);color:var(--blue)}
+
+/* ── Estimates / jobs rows ── */
+.doc-row{border:2px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.doc-row .top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.doc-row .amt{font-weight:800;font-size:1.25rem}
+.doc-actions{display:flex;gap:10px;margin-top:12px}
+.doc-actions button{flex:1;padding:13px;border-radius:11px;font-weight:800;font-size:1rem;border:none;cursor:pointer}
+.btn-approve{background:var(--green);color:#fff}
+.btn-decline{background:#fff;color:var(--red);border:2.5px solid var(--red) !important}
+.item-line{display:flex;justify-content:space-between;font-size:.95rem;padding:3px 0;color:#33507F}
+
+/* ── Messages ── */
+.msg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.bubble{max-width:82%;padding:11px 15px;border-radius:16px;font-size:1rem}
+.bubble.client{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:4px}
+.bubble.business{align-self:flex-start;background:var(--mist);border-bottom-left-radius:4px}
+.bubble .t{display:block;font-size:.72rem;opacity:.7;margin-top:3px}
+.msg-input-row{display:flex;gap:8px}
+.msg-input-row input{flex:1}
+.msg-input-row button{background:var(--blue);color:#fff;border:none;border-radius:12px;padding:0 20px;font-weight:800;cursor:pointer}
+
+/* ── FAQ ── */
+.faq-q{border:2px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.faq-q button{width:100%;background:#fff;border:none;text-align:left;padding:16px;font-weight:800;font-size:1rem;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+.faq-q .a{display:none;padding:0 16px 16px;color:#33507F}
+.faq-q.open .a{display:block}
+.faq-q.open button{background:var(--mist)}
+
+/* ── Map ── */
+#mapbox{height:62vh;border-radius:var(--radius);border:2px solid var(--line)}
+.leaflet-container{font-family:var(--font-body)}
+
+/* ── Gallery ── */
+.gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gal-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}
+.gal-cap{font-size:.85rem;color:#4A5F85;margin-top:4px}
+
+/* ── Bottom nav ── */
+#bnav{
+  position:fixed;bottom:0;left:0;right:0;z-index:900;height:calc(var(--bnav-h) + env(safe-area-inset-bottom));
+  background:var(--white);border-top:2px solid var(--line);
+  display:flex;align-items:flex-start;padding:8px 4px env(safe-area-inset-bottom);
+}
+#bnav .tab{
+  flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:.72rem;font-weight:700;color:#6B7FA5;cursor:pointer;padding-top:6px;touch-action:manipulation;
+}
+#bnav .tab .ic{font-size:1.45rem;line-height:1}
+#bnav .tab.on{color:var(--blue)}
+#bnav .quote-tab{flex:1.2;position:relative}
+#bnav .quote-drop{
+  position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+  width:62px;height:62px;background:var(--yellow);border:4px solid var(--white);
+  border-radius:50% 50% 50% 0;transform:translateX(-50%) rotate(-45deg);
+  box-shadow:0 3px 10px rgba(11,43,91,.25);display:flex;align-items:center;justify-content:center;
+}
+#bnav .quote-drop span{transform:rotate(45deg);font-size:1.5rem}
+#bnav .quote-tab .lbl{margin-top:40px;font-size:.72rem;font-weight:800;color:var(--ink)}
+
+/* ── More sheet ── */
+#sheet-bg{position:fixed;inset:0;background:rgba(11,43,91,.45);z-index:950;display:none}
+#sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:960;background:#fff;
+  border-radius:22px 22px 0 0;padding:18px 18px calc(20px + env(safe-area-inset-bottom));
+  transform:translateY(105%);transition:transform .25s ease;
+}
+#sheet.open{transform:translateY(0)}
+#sheet .sheet-link{
+  display:flex;align-items:center;gap:14px;width:100%;background:none;border:none;
+  padding:15px 6px;font-size:1.08rem;font-weight:700;color:var(--ink);cursor:pointer;
+  border-bottom:1.5px solid var(--mist);text-align:left;touch-action:manipulation;
+}
+#sheet .sheet-link .ic{font-size:1.3rem;width:30px;text-align:center}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bnav-h) + 20px);
+  background:var(--ink);color:#fff;padding:13px 22px;border-radius:999px;font-weight:700;
+  z-index:1200;display:none;max-width:88vw;text-align:center;
+}
+
+/* ── Desktop ── */
+@media(min-width:820px){
+  body{padding-bottom:30px}
+  #bnav{display:none}
+  #topbar{height:76px;padding:0 28px}
+  :root{--topbar-h:76px}
+  #topnav-links{display:flex !important;gap:4px;margin-left:18px}
+  #topnav-links button{background:none;border:none;font-weight:700;font-size:.98rem;color:var(--ink);padding:10px 13px;border-radius:9px;cursor:pointer}
+  #topnav-links button:hover{background:var(--mist);color:var(--blue)}
+  .svc-grid{grid-template-columns:repeat(3,1fr)}
+  .gal-grid{grid-template-columns:repeat(3,1fr)}
+}
+#topnav-links{display:none}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP BAR ═══ -->
+<header id="topbar">
+  <div class="brand" onclick="showView('home')">
+    <svg class="dropmark" viewBox="0 0 60 76" aria-hidden="true">
+      <path d="M26 12 C14 30 6 42 6 54 a20 20 0 0 0 40 0 C46 42 38 30 26 12 Z" fill="#FEF700"/>
+      <path d="M44 2 C36 14 30 22 30 30 a14 14 0 0 0 28 0 C58 22 52 14 44 2 Z" fill="#0067FE"/>
+    </svg>
+    <div class="brand-name">2 Guys and<br>a Water Gun</div>
+  </div>
+  <nav id="topnav-links">
+    <button onclick="showView('home')">Home</button>
+    <button onclick="showView('quote')">Get a Quote</button>
+    <button onclick="showView('map')">Our Map</button>
+    <button onclick="showView('rewards')">Rewards</button>
+    <button onclick="showView('gallery')">Gallery</button>
+    <button onclick="showView('faq')">FAQ</button>
+    <button onclick="showView('about')">Our Story</button>
+    <button onclick="showView('account')">My Account</button>
+  </nav>
+  <a class="call-btn" id="call-link" href="tel:">📞 Call Us</a>
+</header>
+
+<main id="main"></main>
+
+<!-- ═══ BOTTOM NAV (mobile) ═══ -->
+<nav id="bnav">
+  <button class="tab" data-v="home" onclick="showView('home')"><span class="ic">🏠</span>Home</button>
+  <button class="tab" data-v="map" onclick="showView('map')"><span class="ic">📍</span>Map</button>
+  <button class="tab quote-tab" data-v="quote" onclick="showView('quote')">
+    <span class="quote-drop"><span>💧</span></span><span class="lbl">QUOTE</span>
+  </button>
+  <button class="tab" data-v="rewards" onclick="showView('rewards')"><span class="ic">🎁</span>Rewards</button>
+  <button class="tab" data-v="more" onclick="openSheet()"><span class="ic">☰</span>More</button>
+</nav>
+
+<!-- ═══ MORE SHEET ═══ -->
+<div id="sheet-bg" onclick="closeSheet()"></div>
+<div id="sheet">
+  <button class="sheet-link" onclick="goSheet('account')"><span class="ic">👤</span>My Account</button>
+  <button class="sheet-link" onclick="goSheet('messages')"><span class="ic">💬</span>Message Us</button>
+  <button class="sheet-link" onclick="goSheet('specials')"><span class="ic">⭐</span>Specials</button>
+  <button class="sheet-link" onclick="goSheet('gallery')"><span class="ic">📸</span>Gallery</button>
+  <button class="sheet-link" onclick="goSheet('faq')"><span class="ic">❓</span>FAQ</button>
+  <button class="sheet-link" onclick="goSheet('about')"><span class="ic">💦</span>Our Story</button>
+  <a class="sheet-link" id="sheet-call" href="tel:" style="text-decoration:none"><span class="ic">📞</span>Call Us</a>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   CONFIG — edit these values
+═══════════════════════════════════════════════════════════ */
+var SUPA_URL = 'https://yhqzdvaleqksqatvawzm.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlocXpkdmFsZXFrc3FhdHZhd3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzYxNjgsImV4cCI6MjA5MTI1MjE2OH0.ALv4QzsnS82B2_Ffhm_gXhqt1Fs4IMyk2AEbr1D89lQ';
+var BUSINESS = {
+  name: '2 Guys and a Water Gun',
+  phone: '5805551234',            // <<< EDIT ME: your real phone, digits only
+  phoneDisplay: '(580) 555-1234', // <<< EDIT ME: how it should look on screen
+  email: '2guywashing@gmail.com',
+  area: 'Ponca City & Kay County, OK'
+};
+var EMAILJS_PUBLIC  = 'nNDLIGteItAU6EEyn';
+var EMAILJS_SERVICE = 'service_46116f3';
+var EMAILJS_TEMPLATE= 'template_xh3ytek';
+var MAP_CENTER = [36.7061, -97.0856]; // Ponca City
+var REWARD_TEXT = 'a FREE gutter cleaning';
+var PUNCHES_NEEDED = 4;
+
+var supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+emailjs.init(EMAILJS_PUBLIC);
+
+/* ─── State ─── */
+var S = {
+  user:null, client:null,
+  invoices:[], invoice_items:[], estimates:[], estimate_items:[],
+  recurring:[], redemptions:[], msgs:[], loaded:false
+};
+var _map=null, _view='home';
+
+/* ─── Helpers ─── */
+function $(id){return document.getElementById(id);}
+function escH(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showToast(msg){var t=$('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(function(){t.style.display='none';},3200);}
+function money(n){return '$'+(Number(n)||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+/* parse 'YYYY-MM-DD' without timezone shifts */
+function parseYMD(s){if(!s)return null;var p=String(s).slice(0,10).split('-');return {y:+p[0],m:+p[1],d:+p[2]};}
+function ymdToDate(o){return new Date(o.y,o.m-1,o.d);}
+var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(s){var o=parseYMD(s);if(!o||!o.y)return '';return MONTHS[o.m-1]+' '+o.d+', '+o.y;}
+function addFreq(s,freq){
+  var o=parseYMD(s);if(!o)return null;
+  var d=new Date(o.y,o.m-1,o.d);
+  if(freq==='every_2_weeks')d.setDate(d.getDate()+14);
+  else if(freq==='monthly')d.setMonth(d.getMonth()+1);
+  else if(freq==='quarterly')d.setMonth(d.getMonth()+3);
+  else if(freq==='every_6_months')d.setMonth(d.getMonth()+6);
+  else if(freq==='annual')d.setFullYear(d.getFullYear()+1);
+  else return null;
+  return d;
+}
+var FREQ_LABELS={every_2_weeks:'Every 2 weeks',monthly:'Monthly',quarterly:'Quarterly',every_6_months:'Every 6 months',annual:'Yearly'};
+function fmtDateObj(d){return MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();}
+
+/* ─── Navigation ─── */
+function showView(v){
+  _view=v;closeSheet();
+  document.querySelectorAll('#bnav .tab').forEach(function(t){t.classList.toggle('on',t.dataset.v===v);});
+  window.scrollTo(0,0);
+  var fn=VIEWS[v]||VIEWS.home;
+  fn($('main'));
+}
+function openSheet(){$('sheet-bg').style.display='block';$('sheet').classList.add('open');}
+function closeSheet(){$('sheet-bg').style.display='none';$('sheet').classList.remove('open');}
+function goSheet(v){closeSheet();showView(v);}
+
+/* ═══════════════════════════════════════════════════════════
+   VIEWS
+═══════════════════════════════════════════════════════════ */
+var VIEWS = {};
+
+/* ─── HOME ─── */
+VIEWS.home = function(el){
+  var nextSvc = nextServiceHTML();
+  el.innerHTML =
+    '<section class="hero">'
+      +'<div class="drops"><svg width="54" height="68" viewBox="0 0 60 76"><path d="M26 12 C14 30 6 42 6 54 a20 20 0 0 0 40 0 C46 42 38 30 26 12 Z" fill="#FEF700"/><path d="M44 2 C36 14 30 22 30 30 a14 14 0 0 0 28 0 C58 22 52 14 44 2 Z" fill="#ffffff"/></svg></div>'
+      +'<h1 class="display">We Make <span class="yl">Dirty</span><br>Disappear</h1>'
+      +'<p>House washing, windows, gutters &amp; concrete for '+escH(BUSINESS.area)+'. Two local guys, one serious water gun.</p>'
+      +'<button class="hero-cta" onclick="showView(\'quote\')">Get a Free Quote</button>'
+    +'</section>'
+    +'<div class="pad">'
+      + nextSvc
+      +'<h2 class="section-title">What We Wash</h2>'
+      +'<div class="svc-grid">'
+        +svcTile('🏠','House Wash')+svcTile('🪟','Windows')+svcTile('🍂','Gutters')
+        +svcTile('🧱','Concrete & Drives')+svcTile('🏢','Commercial')+svcTile('🛻','And More')
+      +'</div>'
+      +'<div class="card mist" style="margin-top:18px">'
+        +'<span class="eyebrow">💧 Rewards</span>'
+        +'<h3 style="margin-bottom:6px">Every wash earns a punch.</h3>'
+        +'<p class="muted">Fill '+PUNCHES_NEEDED+' drops and your next gutter cleaning is on us. Regulars win around here.</p>'
+        +'<button class="big-btn ghost" style="margin-top:12px" onclick="showView(\'rewards\')">See My Punch Card</button>'
+      +'</div>'
+      +'<div class="card">'
+        +'<h3 style="margin-bottom:6px">Been washed by us before?</h3>'
+        +'<p class="muted">Sign in to see your estimates, approve quotes, check past jobs, and message us directly.</p>'
+        +'<button class="big-btn" style="margin-top:12px" onclick="showView(\'account\')">My Account</button>'
+      +'</div>'
+      +'<div style="text-align:center;margin:26px 0 10px">'
+        +'<div class="display" style="font-size:1.3rem;color:var(--blue)">Call or text anytime</div>'
+        +'<a href="tel:'+BUSINESS.phone+'" style="font-size:1.6rem;font-weight:800;text-decoration:none">'+escH(BUSINESS.phoneDisplay)+'</a>'
+        +'<p class="muted">'+escH(BUSINESS.area)+' · Cash & check friendly</p>'
+      +'</div>'
+    +'</div>';
+  loadSpecialsPreview();
+};
+function svcTile(em,nm){return '<div class="svc"><div class="em">'+em+'</div><div class="nm">'+nm+'</div></div>';}
+function nextServiceHTML(){
+  if(!S.user||!S.client||!S.recurring.length)return '';
+  var soonest=null;
+  S.recurring.forEach(function(r){
+    var d=addFreq(r.last_invoiced,r.frequency);
+    if(d&&(!soonest||d<soonest.date))soonest={date:d,r:r};
+  });
+  if(!soonest)return '';
+  var overdue=soonest.date<new Date();
+  return '<div class="card" style="border-color:var(--blue)">'
+    +'<span class="eyebrow">Next Service</span>'
+    +'<h3>'+escH(soonest.r.name||'Recurring service')+'</h3>'
+    +'<p style="font-size:1.15rem;font-weight:800;color:var(--blue)">'+(overdue?'Due now — we\'ll be in touch!':'Around '+fmtDateObj(soonest.date))+'</p>'
+    +'<p class="muted">'+(FREQ_LABELS[soonest.r.frequency]||'')+' · last done '+fmtDate(soonest.r.last_invoiced)+'</p>'
+  +'</div>';
+}
+async function loadSpecialsPreview(){
+  try{
+    var r=await supa.from('specials').select('*').eq('active',true).order('sort').limit(1);
+    if(r.data&&r.data.length&&_view==='home'){
+      var s=r.data[0];
+      var box=document.createElement('div');
+      box.className='card';box.style.borderColor='var(--yellow)';box.style.borderWidth='3px';
+      box.innerHTML='<span class="eyebrow">'+escH(s.badge||'Special')+'</span><h3>'+escH(s.title)+'</h3><p class="muted">'+escH(s.body||'')+'</p>'
+        +'<button class="big-btn yellow" style="margin-top:12px" onclick="showView(\'quote\')">Claim This Deal</button>';
+      var main=$('main');var pad=main.querySelector('.pad');
+      if(pad)pad.insertBefore(box,pad.children[S.user&&nextServiceHTML()?1:0]);
+    }
+  }catch(e){}
+}
+
+/* ─── SPECIALS ─── */
+VIEWS.specials = async function(el){
+  el.innerHTML='<div class="pad"><h2 class="section-title">⭐ Specials</h2><div id="sp-list"><p class="muted">Loading…</p></div></div>';
+  try{
+    var r=await supa.from('specials').select('*').eq('active',true).order('sort');
+    var list=$('sp-list');if(!list)return;
+    if(!r.data||!r.data.length){list.innerHTML='<div class="card mist"><p>No specials running right now — check back soon, or follow us on Facebook for flash deals.</p></div>';return;}
+    list.innerHTML=r.data.map(function(s){
+      return '<div class="card" style="border-color:var(--yellow);border-width:3px">'
+        +'<span class="eyebrow">'+escH(s.badge||'Special')+'</span>'
+        +'<h3>'+escH(s.title)+'</h3><p class="muted">'+escH(s.body||'')+'</p>'
+        +'<button class="big-btn yellow" style="margin-top:12px" onclick="showView(\'quote\')">Get This Deal</button></div>';
+    }).join('');
+  }catch(e){var l=$('sp-list');if(l)l.innerHTML='<p class="muted">Couldn\'t load specials. Pull to refresh.</p>';}
+};
+
+/* ─── REWARDS ─── */
+VIEWS.rewards = function(el){
+  var inner;
+  if(!S.user){
+    inner='<div class="card mist" style="text-align:center">'
+      +'<p style="font-weight:700;margin-bottom:12px">Sign in to see your punch card.</p>'
+      +'<button class="big-btn" onclick="showView(\'account\')">Sign In</button></div>';
+  } else if(!S.client){
+    inner='<div class="card mist"><p>We couldn\'t find a customer record for <b>'+escH(S.user.email)+'</b>. If you\'ve used us before, give us a call and we\'ll link your email — or request your first quote to get started!</p></div>';
+  } else {
+    var paid=S.invoices.filter(function(i){return i.status==='paid';}).length;
+    var earned=Math.max(0,paid - S.redemptions.length*PUNCHES_NEEDED);
+    var show=Math.min(earned,PUNCHES_NEEDED);
+    var drops='';
+    for(var i=1;i<=PUNCHES_NEEDED;i++){
+      var filled=i<=show;
+      drops+='<div class="punch'+(filled?' filled':'')+'">'
+        +'<svg viewBox="0 0 60 76"><path d="M30 4 C16 26 7 40 7 53 a23 23 0 0 0 46 0 C53 40 44 26 30 4 Z" fill="'+(filled?'#0067FE':'#EFF5FF')+'" stroke="#0067FE" stroke-width="3"/></svg>'
+        +'<div class="num" style="color:'+(filled?'#fff':'#0B2B5B')+'">'+(filled?'✓':i)+'</div></div>';
+    }
+    inner='<div class="card" style="text-align:center">'
+      +'<h3>'+escH(S.client.contact||'Your')+'\'s Punch Card</h3>'
+      +'<div class="punch-wrap">'+drops+'</div>'
+      +(earned>=PUNCHES_NEEDED
+        ?'<div class="reward-ready">🎉 Reward ready! Your next visit earns '+REWARD_TEXT+'. We\'ll apply it — just mention it when we schedule.</div>'
+        :'<p style="font-weight:700">'+show+' of '+PUNCHES_NEEDED+' punches — '+(PUNCHES_NEEDED-show)+' more to '+REWARD_TEXT+'!</p>')
+      +'<p class="muted" style="margin-top:8px">'+paid+' completed service'+(paid===1?'':'s')+' on record.</p>'
+    +'</div>';
+  }
+  el.innerHTML='<div class="pad"><h2 class="section-title">💧 Drop Rewards</h2>'+inner
+    +'<div class="card mist"><h3 style="margin-bottom:8px">How it works</h3>'
+    +'<p>1. Every completed &amp; paid service = <b>one punch</b>.</p>'
+    +'<p>2. Fill all <b>'+PUNCHES_NEEDED+' drops</b> and your next service includes <b>'+REWARD_TEXT+'</b> on us.</p>'
+    +'<p>3. Card resets and you start filling it again. Quarterly customers: you\'ll earn a reward every single year, automatically.</p></div>'
+  +'</div>';
+};
+
+/* ─── QUOTE REQUEST ─── */
+var _qSchedule='one_time';
+VIEWS.quote = function(el){
+  el.innerHTML='<div class="pad">'
+    +'<h2 class="section-title">💧 Get a Free Quote</h2>'
+    +'<p class="muted" style="margin-bottom:6px">Tell us what needs washing. We\'ll get back to you fast with a price — usually the same day.</p>'
+    +'<div class="card">'
+      +'<label>Your Name *</label><input type="text" id="q-name" autocomplete="name">'
+      +'<label>Phone *</label><input type="tel" id="q-phone" autocomplete="tel">'
+      +'<label>Email</label><input type="email" id="q-email" autocomplete="email" value="'+escH(S.user?S.user.email:'')+'">'
+      +'<label>Service Address</label><input type="text" id="q-address" autocomplete="street-address">'
+      +'<label>What needs cleaned?</label>'
+      +'<div class="check-grid">'
+        +qCheck('House Wash')+qCheck('Roof Wash')+qCheck('Windows')+qCheck('Gutters')
+        +qCheck('Concrete / Driveway')+qCheck('Commercial')
+      +'</div>'
+      +'<label>One time, or keep it clean year-round?</label>'
+      +'<div class="radio-row">'
+        +'<div class="radio-card on" id="q-one" onclick="setSchedule(\'one_time\')">One Time</div>'
+        +'<div class="radio-card" id="q-rec" onclick="setSchedule(\'recurring\')">Recurring</div>'
+      +'</div>'
+      +'<div id="q-freq-wrap" style="display:none">'
+        +'<label>How often?</label>'
+        +'<select id="q-freq">'
+          +'<option value="quarterly">Quarterly (most popular)</option>'
+          +'<option value="monthly">Monthly</option>'
+          +'<option value="every_2_weeks">Every 2 weeks</option>'
+          +'<option value="every_6_months">Every 6 months</option>'
+          +'<option value="annual">Yearly</option>'
+        +'</select>'
+        +'<p class="muted" style="margin-top:6px">Recurring customers get priority scheduling and fill their rewards card fastest.</p>'
+      +'</div>'
+      +'<label>Anything else we should know?</label>'
+      +'<textarea id="q-details" placeholder="Two-story house, dog in the backyard, prefer mornings…"></textarea>'
+      +'<button class="big-btn" id="q-submit" style="margin-top:18px" onclick="submitQuote()">Send My Quote Request</button>'
+      +'<p class="muted" style="text-align:center;margin-top:10px">Prefer to talk? <a href="tel:'+BUSINESS.phone+'">'+escH(BUSINESS.phoneDisplay)+'</a></p>'
+    +'</div></div>';
+};
+function qCheck(nm){return '<label class="check-item"><input type="checkbox" class="q-svc" value="'+nm+'">'+nm+'</label>';}
+function setSchedule(s){
+  _qSchedule=s;
+  $('q-one').classList.toggle('on',s==='one_time');
+  $('q-rec').classList.toggle('on',s==='recurring');
+  $('q-freq-wrap').style.display=(s==='recurring')?'block':'none';
+}
+async function submitQuote(){
+  var name=$('q-name').value.trim(), phone=$('q-phone').value.trim();
+  if(!name||!phone){showToast('Name and phone are required');return;}
+  var svcs=Array.prototype.slice.call(document.querySelectorAll('.q-svc:checked')).map(function(c){return c.value;}).join(', ');
+  var row={
+    name:name, phone:phone,
+    email:$('q-email').value.trim(), address:$('q-address').value.trim(),
+    services:svcs, schedule:_qSchedule,
+    frequency:_qSchedule==='recurring'?$('q-freq').value:null,
+    details:$('q-details').value.trim()
+  };
+  var btn=$('q-submit');btn.disabled=true;btn.textContent='Sending…';
+  try{
+    var r=await supa.from('quote_requests').insert(row);
+    if(r.error)throw r.error;
+    try{
+      await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{
+        to_email:BUSINESS.email,
+        subject:'💧 New quote request from '+name+(row.schedule==='recurring'?' (RECURRING - '+(FREQ_LABELS[row.frequency]||row.frequency)+')':''),
+        message:'Name: '+name+'\nPhone: '+phone+'\nEmail: '+row.email+'\nAddress: '+row.address
+          +'\nServices: '+svcs+'\nSchedule: '+row.schedule+(row.frequency?' / '+row.frequency:'')
+          +'\nDetails: '+row.details,
+        name:name, email:row.email||BUSINESS.email, time:new Date().toLocaleString()
+      });
+    }catch(e){console.warn('email notify failed',e);}
+    $('main').innerHTML='<div class="pad" style="text-align:center;padding-top:60px">'
+      +'<div style="font-size:4rem">💦</div>'
+      +'<h2 class="section-title" style="margin-top:10px">Request Sent!</h2>'
+      +'<p class="muted" style="max-width:340px;margin:0 auto 22px">Thanks '+escH(name)+'! We\'ll get you a price ASAP — usually same day. Keep an eye on your phone.</p>'
+      +'<button class="big-btn ghost" style="max-width:280px;margin:0 auto" onclick="showView(\'home\')">Back to Home</button></div>';
+  }catch(e){
+    console.error(e);showToast('Couldn\'t send — try calling us instead');
+    btn.disabled=false;btn.textContent='Send My Quote Request';
+  }
+}
+
+/* ─── MAP ─── */
+VIEWS.map = async function(el){
+  el.innerHTML='<div class="pad">'
+    +'<h2 class="section-title">📍 Jobs We\'ve Done</h2>'
+    +'<p class="muted" style="margin-bottom:12px">Every drop is a real job around town. Dots are placed near — not on — each property to respect privacy. Odds are we\'ve washed on your street.</p>'
+    +'<div id="mapbox"></div>'
+    +'<p class="muted" style="margin-top:10px;font-size:.85rem">Want your job off the map? Just ask and it\'s gone.</p>'
+  +'</div>';
+  if(_map){_map.remove();_map=null;}
+  _map=L.map('mapbox').setView(MAP_CENTER,13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'&copy; OpenStreetMap contributors',maxZoom:18
+  }).addTo(_map);
+  try{
+    var r=await supa.from('map_pins').select('*').eq('hidden',false);
+    (r.data||[]).forEach(function(p){
+      L.circleMarker([p.lat,p.lng],{radius:9,color:'#0067FE',weight:3,fillColor:'#FEF700',fillOpacity:.9})
+        .addTo(_map).bindPopup('<b>'+escH(p.label||'Job')+'</b><br>'+escH(p.season||''));
+    });
+    if(!r.data||!r.data.length){
+      L.popup().setLatLng(MAP_CENTER).setContent('Map pins coming soon — check back!').openOn(_map);
+    }
+  }catch(e){console.warn(e);}
+  setTimeout(function(){if(_map)_map.invalidateSize();},250);
+};
+
+/* ─── GALLERY ─── */
+VIEWS.gallery = async function(el){
+  el.innerHTML='<div class="pad"><h2 class="section-title">📸 Before & After</h2><div id="gal"><p class="muted">Loading…</p></div></div>';
+  try{
+    var r=await supa.from('gallery').select('*').eq('active',true).order('sort');
+    var g=$('gal');if(!g)return;
+    if(!r.data||!r.data.length){
+      g.innerHTML='<div class="card mist"><p>Photos coming soon! In the meantime, find our latest before-and-afters on our Facebook page.</p></div>';return;
+    }
+    g.innerHTML='<div class="gal-grid">'+r.data.map(function(p){
+      return '<div><img src="'+escH(p.url)+'" alt="'+escH(p.caption||'Job photo')+'" loading="lazy"><div class="gal-cap">'+escH(p.caption||'')+'</div></div>';
+    }).join('')+'</div>';
+  }catch(e){var g=$('gal');if(g)g.innerHTML='<p class="muted">Couldn\'t load photos.</p>';}
+};
+
+/* ─── FAQ ─── */
+VIEWS.faq = function(el){
+  var faqs=[
+    ['How do quotes work?','Request a quote here or call us. Most quotes go out the same day. When we send an estimate, you can approve or decline it right from this site — no phone tag needed.'],
+    ['How do I pay?','Cash or check when the job\'s done. Simple as that. We\'ll leave an invoice either way so you have it for your records.'],
+    ['Do you use my water?','Yes, we typically hook up to your outdoor spigot. It usually adds only a couple dollars to your water bill for a full house wash.'],
+    ['What if it rains?','Light rain doesn\'t stop a wash — the surfaces are getting wet anyway! Storms or freezing temps and we\'ll reschedule, no charge, no hassle.'],
+    ['What\'s the recurring program?','Pick a frequency — quarterly is the local favorite — and we show up on schedule without you having to think about it. Recurring customers get priority scheduling and earn rewards fastest.'],
+    ['How do Drop Rewards work?','Every completed, paid service is one punch. Four punches = '+REWARD_TEXT+'. Sign in on this site anytime to see your card.'],
+    ['What areas do you serve?',BUSINESS.area+' and the surrounding area. Not sure if you\'re in range? Ask — we travel for the right job.'],
+    ['Will you post my house on the map or Facebook?','Only with your OK for photos. Map dots are anonymous and placed near, not on, the property. Want off the map entirely? One call and it\'s done.']
+  ];
+  el.innerHTML='<div class="pad"><h2 class="section-title">❓ FAQ</h2>'
+    +faqs.map(function(f,i){
+      return '<div class="faq-q" id="faq-'+i+'"><button onclick="toggleFaq('+i+')">'+escH(f[0])+'<span>▾</span></button><div class="a"><p>'+f[1]+'</p></div></div>';
+    }).join('')
+    +'<div class="card mist" style="margin-top:16px;text-align:center"><p style="font-weight:700">Still curious?</p><a class="big-btn" style="margin-top:10px" href="tel:'+BUSINESS.phone+'">Call '+escH(BUSINESS.phoneDisplay)+'</a></div>'
+  +'</div>';
+};
+function toggleFaq(i){$('faq-'+i).classList.toggle('open');}
+
+/* ─── ABOUT / MISSION ─── */
+VIEWS.about = function(el){
+  el.innerHTML='<div class="pad">'
+    +'<h2 class="section-title">💦 Our Story</h2>'
+    +'<div class="card mist">'
+      +'<p style="font-size:1.1rem;font-weight:700;margin-bottom:10px">Two guys. One water gun. A whole lot of clean.</p>'
+      +'<p>We\'re a local, owner-operated pressure washing crew based right here in Ponca City. No franchise, no call center — when you call, you get one of the two guys who\'ll actually be standing in your driveway.</p>'
+      +'<p style="margin-top:10px">We run professional equipment, use the right chemicals for the job (your plants and pets are safe with us), and we don\'t leave until it looks right.</p>'
+    +'</div>'
+    +'<div class="card">'
+      +'<h3 style="margin-bottom:8px">Our promise</h3>'
+      +'<p>✔ Straight prices, no surprise add-ons</p>'
+      +'<p>✔ We show up when we say we will</p>'
+      +'<p>✔ If you\'re not happy, we make it right</p>'
+    +'</div>'
+    +'<button class="big-btn" onclick="showView(\'quote\')">Get a Free Quote</button>'
+  +'</div>';
+};
+
+/* ═══ ACCOUNT / SIGN IN ═══ */
+VIEWS.account = function(el){
+  if(!S.user){renderLogin(el);return;}
+  if(!S.loaded){el.innerHTML='<div class="pad"><p class="muted">Loading your account…</p></div>';loadClientData().then(function(){if(_view==='account')showView('account');});return;}
+  var c=S.client;
+  var pending=S.estimates.filter(function(e){return e.status==='sent';});
+  var estsHTML=S.estimates.length?S.estimates.slice().sort(function(a,b){return (b.issue_date||'')<(a.issue_date||'')?-1:1;}).map(estRow).join(''):'<p class="muted">No estimates yet.</p>';
+  var jobs=S.invoices.filter(function(i){return i.status==='paid';}).sort(function(a,b){return (a.issue_date||'')<(b.issue_date||'')?1:-1;});
+  var jobsHTML=jobs.length?jobs.map(jobRow).join(''):'<p class="muted">No completed jobs yet.</p>';
+  el.innerHTML='<div class="pad">'
+    +'<h2 class="section-title">👤 My Account</h2>'
+    +(c?'<p class="muted" style="margin-bottom:14px">Signed in as <b>'+escH(c.contact||S.user.email)+'</b> ('+escH(S.user.email)+')</p>'
+       :'<div class="card mist"><p>Signed in as <b>'+escH(S.user.email)+'</b>, but we don\'t have a customer record under this email yet. If you\'ve used us before, call us and we\'ll link it up.</p></div>')
+    +nextServiceHTML()
+    +(pending.length?'<div class="card" style="border-color:var(--yellow);border-width:3px"><span class="eyebrow">Action needed</span><p style="font-weight:700">You have '+pending.length+' estimate'+(pending.length>1?'s':'')+' waiting for your approval below. 👇</p></div>':'')
+    +'<h3 class="section-title" style="font-size:1.25rem">Estimates</h3>'+estsHTML
+    +'<h3 class="section-title" style="font-size:1.25rem;margin-top:22px">Past Jobs</h3>'+jobsHTML
+    +'<div style="display:flex;gap:10px;margin-top:24px">'
+      +'<button class="big-btn ghost" onclick="showView(\'messages\')">💬 Message Us</button>'
+      +'<button class="big-btn ghost" onclick="doSignOut()">Sign Out</button>'
+    +'</div>'
+  +'</div>';
+};
+function estTotal(e){
+  return S.estimate_items.filter(function(it){return it.invoice_id===e.id;})
+    .reduce(function(s,it){return s+(Number(it.rate)||0)*(Number(it.qty)||1);},0);
+}
+function invTotal(inv){
+  return S.invoice_items.filter(function(it){return it.invoice_id===inv.id;})
+    .reduce(function(s,it){return s+(Number(it.rate)||0)*(Number(it.qty)||1);},0);
+}
+function itemLines(items){
+  return items.map(function(it){
+    return '<div class="item-line"><span>'+escH(it.name)+(Number(it.qty)>1?' ×'+it.qty:'')+'</span><span>'+money((Number(it.rate)||0)*(Number(it.qty)||1))+'</span></div>';
+  }).join('');
+}
+function estRow(e){
+  var items=S.estimate_items.filter(function(it){return it.invoice_id===e.id;});
+  var st=e.status||'draft';
+  var actions='';
+  if(st==='sent'){
+    actions='<div class="doc-actions">'
+      +'<button class="btn-approve" onclick="respondEstimate(\''+e.id+'\',\'approved\')">✓ Approve</button>'
+      +'<button class="btn-decline" onclick="respondEstimate(\''+e.id+'\',\'declined\')">Decline</button></div>';
+  }
+  return '<div class="doc-row"><div class="top"><b>Estimate #'+escH(e.number)+'</b><span class="pill '+st+'">'+(st==='sent'?'Awaiting You':st)+'</span></div>'
+    +'<p class="muted" style="margin-bottom:8px">'+fmtDate(e.issue_date)+(e.address?' · '+escH(e.address):'')+'</p>'
+    +itemLines(items)
+    +'<div class="top" style="margin-top:8px"><span style="font-weight:700">Total</span><span class="amt">'+money(estTotal(e))+'</span></div>'
+    +actions+'</div>';
+}
+function jobRow(inv){
+  var items=S.invoice_items.filter(function(it){return it.invoice_id===inv.id;});
+  return '<div class="doc-row"><div class="top"><b>'+fmtDate(inv.issue_date)+'</b><span class="pill paid">Paid ✓</span></div>'
+    +itemLines(items)
+    +'<div class="top" style="margin-top:8px"><span style="font-weight:700">Total</span><span class="amt">'+money(invTotal(inv))+'</span></div></div>';
+}
+async function respondEstimate(id,action){
+  if(action==='declined'&&!confirm('Decline this estimate? You can always call us to talk it over first.'))return;
+  try{
+    var r=await supa.rpc('portal_respond_estimate',{p_id:id,p_action:action});
+    if(r.error)throw r.error;
+    var e=S.estimates.find(function(x){return x.id===id;});
+    if(e)e.status=action;
+    showToast(action==='approved'?'✅ Approved! We\'ll reach out to schedule.':'Estimate declined');
+    try{
+      await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{
+        to_email:BUSINESS.email,
+        subject:(action==='approved'?'✅':'❌')+' Estimate '+action+' by '+(S.client?S.client.contact:S.user.email),
+        message:'Estimate ID: '+id+'\nClient: '+(S.client?(S.client.contact+' / '+S.client.phone):S.user.email)+'\nAction: '+action,
+        name:BUSINESS.name,email:BUSINESS.email,time:new Date().toLocaleString()
+      });
+    }catch(e2){}
+    showView('account');
+  }catch(err){console.error(err);showToast('Something went wrong — try again or call us');}
+}
+
+/* ─── LOGIN (email code) ─── */
+function renderLogin(el){
+  el.innerHTML='<div class="pad">'
+    +'<h2 class="section-title">👤 Sign In</h2>'
+    +'<div class="card">'
+      +'<p class="muted" style="margin-bottom:4px">No passwords to remember. Enter your email and we\'ll send you a 6-digit code.</p>'
+      +'<div id="login-step1">'
+        +'<label>Your Email</label><input type="email" id="login-email" autocomplete="email" placeholder="you@example.com">'
+        +'<button class="big-btn" id="login-send" style="margin-top:16px" onclick="sendCode()">Email Me a Code</button>'
+      +'</div>'
+      +'<div id="login-step2" style="display:none">'
+        +'<label>Enter the 6-digit code</label>'
+        +'<input type="text" id="login-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" style="text-align:center;font-size:1.6rem;letter-spacing:.35em;font-weight:800">'
+        +'<button class="big-btn" id="login-verify" style="margin-top:16px" onclick="verifyCode()">Sign In</button>'
+        +'<button class="big-btn ghost" style="margin-top:10px" onclick="backToStep1()">Use a different email</button>'
+      +'</div>'
+      +'<p class="muted" id="login-err" style="color:var(--red);display:none;margin-top:10px"></p>'
+    +'</div>'
+    +'<div class="card mist"><p class="muted"><b>Tip:</b> use the same email we send your invoices to — that\'s how we match you to your estimates and rewards. Not sure which one? Call us.</p></div>'
+  +'</div>';
+}
+var _loginEmail='';
+function backToStep1(){$('login-step1').style.display='block';$('login-step2').style.display='none';}
+async function sendCode(){
+  var email=($('login-email').value||'').trim().toLowerCase();
+  var err=$('login-err');err.style.display='none';
+  if(!email||email.indexOf('@')<0){err.textContent='Enter a valid email.';err.style.display='block';return;}
+  var btn=$('login-send');btn.disabled=true;btn.textContent='Sending…';
+  var r=await supa.auth.signInWithOtp({email:email,options:{shouldCreateUser:true}});
+  btn.disabled=false;btn.textContent='Email Me a Code';
+  if(r.error){err.textContent=r.error.message||'Couldn\'t send the code. Try again in a minute.';err.style.display='block';return;}
+  _loginEmail=email;
+  $('login-step1').style.display='none';$('login-step2').style.display='block';
+  $('login-code').focus();
+  showToast('Code sent to '+email);
+}
+async function verifyCode(){
+  var code=($('login-code').value||'').trim();
+  var err=$('login-err');err.style.display='none';
+  if(code.length!==6){err.textContent='Enter the 6-digit code from your email.';err.style.display='block';return;}
+  var btn=$('login-verify');btn.disabled=true;btn.textContent='Checking…';
+  var r=await supa.auth.verifyOtp({email:_loginEmail,token:code,type:'email'});
+  btn.disabled=false;btn.textContent='Sign In';
+  if(r.error){err.textContent='That code didn\'t work — double-check it or request a new one.';err.style.display='block';return;}
+  S.user=r.data.user;S.loaded=false;
+  showToast('Welcome!');
+  await loadClientData();
+  showView('account');
+}
+async function doSignOut(){
+  await supa.auth.signOut();
+  S.user=null;S.client=null;S.loaded=false;
+  S.invoices=[];S.invoice_items=[];S.estimates=[];S.estimate_items=[];S.recurring=[];S.redemptions=[];S.msgs=[];
+  showToast('Signed out');
+  showView('home');
+}
+
+/* ─── DATA LOAD (after sign in; RLS limits everything to this client) ─── */
+async function loadClientData(){
+  if(!S.user)return;
+  try{
+    var cr=await supa.from('clients').select('*');
+    S.client=(cr.data&&cr.data[0])||null;
+    if(S.client){
+      var results=await Promise.all([
+        supa.from('invoices').select('*'),
+        supa.from('invoice_items').select('*'),
+        supa.from('estimates').select('*'),
+        supa.from('estimate_items').select('*'),
+        supa.from('recurring').select('*'),
+        supa.from('reward_redemptions').select('*')
+      ]);
+      S.invoices=results[0].data||[];
+      S.invoice_items=results[1].data||[];
+      S.estimates=results[2].data||[];
+      S.estimate_items=results[3].data||[];
+      S.recurring=results[4].data||[];
+      S.redemptions=results[5].data||[];
+    }
+    var mr=await supa.from('messages').select('*').order('created_at');
+    S.msgs=mr.data||[];
+  }catch(e){console.error('load error',e);}
+  S.loaded=true;
+}
+
+/* ─── MESSAGES ─── */
+VIEWS.messages = function(el){
+  if(!S.user){
+    el.innerHTML='<div class="pad"><h2 class="section-title">💬 Message Us</h2>'
+      +'<div class="card mist" style="text-align:center"><p style="font-weight:700;margin-bottom:12px">Sign in to send us a message.</p>'
+      +'<button class="big-btn" onclick="showView(\'account\')">Sign In</button></div>'
+      +'<p class="muted" style="text-align:center">Or just call/text: <a href="tel:'+BUSINESS.phone+'">'+escH(BUSINESS.phoneDisplay)+'</a></p></div>';
+    return;
+  }
+  var msgsHTML=S.msgs.length
+    ?S.msgs.map(function(m){
+      return '<div class="bubble '+(m.sender==='client'?'client':'business')+'">'+escH(m.body)
+        +'<span class="t">'+new Date(m.created_at).toLocaleString()+'</span></div>';
+    }).join('')
+    :'<div class="card mist"><p>No messages yet — say hi! We usually answer within a few hours during the day.</p></div>';
+  el.innerHTML='<div class="pad">'
+    +'<h2 class="section-title">💬 Messages</h2>'
+    +'<div class="msg-list" id="msg-list">'+msgsHTML+'</div>'
+    +'<div class="msg-input-row"><input type="text" id="msg-body" placeholder="Type a message…" onkeydown="if(event.key===\'Enter\')sendMsg()"><button onclick="sendMsg()">Send</button></div>'
+  +'</div>';
+  window.scrollTo(0,document.body.scrollHeight);
+};
+async function sendMsg(){
+  var body=($('msg-body').value||'').trim();
+  if(!body)return;
+  $('msg-body').value='';
+  var row={client_email:S.user.email.toLowerCase(),sender:'client',body:body};
+  try{
+    var r=await supa.from('messages').insert(row);
+    if(r.error)throw r.error;
+    S.msgs.push(Object.assign({created_at:new Date().toISOString()},row));
+    showView('messages');
+    try{
+      await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{
+        to_email:BUSINESS.email,
+        subject:'💬 New website message from '+(S.client?S.client.contact:S.user.email),
+        message:body+'\n\nFrom: '+S.user.email+(S.client?' / '+S.client.phone:''),
+        name:BUSINESS.name,email:S.user.email,time:new Date().toLocaleString()
+      });
+    }catch(e2){}
+  }catch(e){console.error(e);showToast('Message didn\'t send — try again');}
+}
+
+/* ─── INIT ─── */
+(function init(){
+  $('call-link').href='tel:'+BUSINESS.phone;
+  $('sheet-call').href='tel:'+BUSINESS.phone;
+  supa.auth.getSession().then(function(r){
+    if(r.data&&r.data.session){S.user=r.data.session.user;loadClientData().then(function(){if(_view==='home')showView('home');});}
+  });
+  showView('home');
+})();
+</script>
+</body>
+</html>
