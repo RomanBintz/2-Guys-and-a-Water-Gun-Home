@@ -337,6 +337,7 @@ function fmtDateObj(d){return MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFul
 /* ─── Navigation ─── */
 function showView(v){
   _view=v;closeSheet();
+  if(_msgPoll){clearInterval(_msgPoll);_msgPoll=null;}
   document.querySelectorAll('#bnav .tab').forEach(function(t){t.classList.toggle('on',t.dataset.v===v);});
   window.scrollTo(0,0);
   var fn=VIEWS[v]||VIEWS.home;
@@ -807,6 +808,25 @@ async function loadClientData(){
 }
 
 /* ─── MESSAGES ─── */
+var _msgPoll=null;
+function msgListHTML(){
+  return S.msgs.length
+    ?S.msgs.map(function(m){
+      return '<div class="bubble '+(m.sender==='client'?'client':'business')+'">'+escH(m.body)
+        +'<span class="t">'+new Date(m.created_at).toLocaleString()+'</span></div>';
+    }).join('')
+    :'<div class="card mist"><p>No messages yet — say hi! We usually answer within a few hours during the day.</p></div>';
+}
+async function fetchMsgs(){
+  if(!S.user)return false;
+  try{
+    var r=await supa.from('messages').select('*').ilike('client_email',S.user.email).order('created_at');
+    var fresh=r.data||[];
+    var changed=fresh.length!==S.msgs.length;
+    S.msgs=fresh;
+    return changed;
+  }catch(e){return false;}
+}
 VIEWS.messages = function(el){
   if(!S.user){
     el.innerHTML='<div class="pad"><h2 class="section-title">💬 Message Us</h2>'
@@ -815,19 +835,25 @@ VIEWS.messages = function(el){
       +'<p class="muted" style="text-align:center">Or just call/text: <a href="tel:'+BUSINESS.phone+'">'+escH(BUSINESS.phoneDisplay)+'</a></p></div>';
     return;
   }
-  var msgsHTML=S.msgs.length
-    ?S.msgs.map(function(m){
-      return '<div class="bubble '+(m.sender==='client'?'client':'business')+'">'+escH(m.body)
-        +'<span class="t">'+new Date(m.created_at).toLocaleString()+'</span></div>';
-    }).join('')
-    :'<div class="card mist"><p>No messages yet — say hi! We usually answer within a few hours during the day.</p></div>';
   el.innerHTML='<div class="pad">'
     +'<h2 class="section-title">💬 Messages</h2>'
-    +'<div class="msg-list" id="msg-list">'+msgsHTML+'</div>'
+    +'<div class="msg-list" id="msg-list">'+msgListHTML()+'</div>'
     +'<div class="msg-input-row"><input type="text" id="msg-body" placeholder="Type a message…" onkeydown="if(event.key===\'Enter\')sendMsg()"><button onclick="sendMsg()">Send</button></div>'
   +'</div>';
   window.scrollTo(0,document.body.scrollHeight);
+  // fetch fresh now, then poll every 8s while this page is open
+  fetchMsgs().then(function(ch){if(ch&&_view==='messages')refreshMsgList();});
+  _msgPoll=setInterval(function(){
+    if(_view!=='messages'){clearInterval(_msgPoll);_msgPoll=null;return;}
+    fetchMsgs().then(function(ch){if(ch&&_view==='messages')refreshMsgList();});
+  },8000);
 };
+function refreshMsgList(){
+  var list=$('msg-list');
+  if(!list)return;
+  list.innerHTML=msgListHTML();
+  window.scrollTo(0,document.body.scrollHeight);
+}
 async function sendMsg(){
   var body=($('msg-body').value||'').trim();
   if(!body)return;
@@ -837,7 +863,7 @@ async function sendMsg(){
     var r=await supa.from('messages').insert(row);
     if(r.error)throw r.error;
     S.msgs.push(Object.assign({created_at:new Date().toISOString()},row));
-    showView('messages');
+    refreshMsgList();
     try{
       await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{
         to_email:BUSINESS.email,
