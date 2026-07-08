@@ -175,6 +175,7 @@ textarea{min-height:110px;resize:vertical}
 }
 #bnav .tab .ic{font-size:1.45rem;line-height:1}
 #bnav .tab.on{color:var(--blue)}
+#msg-dot{position:absolute;top:5px;right:24%;width:11px;height:11px;background:var(--red);border-radius:50%;border:2px solid var(--white)}
 #bnav .quote-tab{flex:1.2;position:relative}
 #bnav .quote-drop{
   position:absolute;top:-26px;left:50%;transform:translateX(-50%);
@@ -241,6 +242,7 @@ textarea{min-height:110px;resize:vertical}
     <button onclick="showView('quote')">Get a Quote</button>
     <button onclick="showView('map')">Our Map</button>
     <button onclick="showView('rewards')">Rewards</button>
+    <button onclick="showView('messages')">Messages</button>
     <button onclick="showView('gallery')">Gallery</button>
     <button onclick="showView('faq')">FAQ</button>
     <button onclick="showView('about')">Our Story</button>
@@ -258,7 +260,7 @@ textarea{min-height:110px;resize:vertical}
   <button class="tab quote-tab" data-v="quote" onclick="showView('quote')">
     <span class="quote-drop"><span>💧</span></span><span class="lbl">QUOTE</span>
   </button>
-  <button class="tab" data-v="rewards" onclick="showView('rewards')"><span class="ic">🎁</span>Rewards</button>
+  <button class="tab" data-v="messages" onclick="showView('messages')" style="position:relative"><span class="ic">💬</span>Messages<span id="msg-dot" style="display:none"></span></button>
   <button class="tab" data-v="more" onclick="openSheet()"><span class="ic">☰</span>More</button>
 </nav>
 
@@ -266,7 +268,7 @@ textarea{min-height:110px;resize:vertical}
 <div id="sheet-bg" onclick="closeSheet()"></div>
 <div id="sheet">
   <button class="sheet-link" onclick="goSheet('account')"><span class="ic">👤</span>My Account</button>
-  <button class="sheet-link" onclick="goSheet('messages')"><span class="ic">💬</span>Message Us</button>
+  <button class="sheet-link" onclick="goSheet('rewards')"><span class="ic">🎁</span>Drop Rewards</button>
   <button class="sheet-link" onclick="goSheet('specials')"><span class="ic">⭐</span>Specials</button>
   <button class="sheet-link" onclick="goSheet('gallery')"><span class="ic">📸</span>Gallery</button>
   <button class="sheet-link" onclick="goSheet('faq')"><span class="ic">❓</span>FAQ</button>
@@ -287,8 +289,8 @@ var SUPA_URL = 'https://yhqzdvaleqksqatvawzm.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlocXpkdmFsZXFrc3FhdHZhd3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzYxNjgsImV4cCI6MjA5MTI1MjE2OH0.ALv4QzsnS82B2_Ffhm_gXhqt1Fs4IMyk2AEbr1D89lQ';
 var BUSINESS = {
   name: '2 Guys and a Water Gun',
-  phone: '5805551234',            // <<< EDIT ME: your real phone, digits only
-  phoneDisplay: '(580) 555-1234', // <<< EDIT ME: how it should look on screen
+  phone: '5804855858',
+  phoneDisplay: '(580) 485-5858',
   email: '2guywashing@gmail.com',
   area: 'Ponca City & Kay County, OK'
 };
@@ -378,7 +380,7 @@ VIEWS.home = function(el){
       +'<div class="card">'
         +'<h3 style="margin-bottom:6px">Been washed by us before?</h3>'
         +'<p class="muted">Sign in to see your estimates, approve quotes, check past jobs, and message us directly.</p>'
-        +'<button class="big-btn" style="margin-top:12px" onclick="showView(\'account\')">My Account</button>'
+        +'<div style="display:flex;gap:10px;margin-top:12px"><button class="big-btn" onclick="showView(\'account\')">My Account</button><button class="big-btn ghost" onclick="showView(\'messages\')">💬 Message Us</button></div>'
       +'</div>'
       +'<div style="text-align:center;margin:26px 0 10px">'
         +'<div class="display" style="font-size:1.3rem;color:var(--blue)">Call or text anytime</div>'
@@ -805,6 +807,7 @@ async function loadClientData(){
     S.msgs=mr.data||[];
   }catch(e){console.error('load error',e);}
   S.loaded=true;
+  updateMsgDot();
 }
 
 /* ─── MESSAGES ─── */
@@ -824,8 +827,26 @@ async function fetchMsgs(){
     var fresh=r.data||[];
     var changed=fresh.length!==S.msgs.length;
     S.msgs=fresh;
+    updateMsgDot();
     return changed;
   }catch(e){return false;}
+}
+function latestBizMsgTime(){
+  var t='';
+  S.msgs.forEach(function(m){if(m.sender==='business'&&m.created_at>t)t=m.created_at;});
+  return t;
+}
+function updateMsgDot(){
+  var dot=$('msg-dot');
+  if(!dot)return;
+  var t=latestBizMsgTime();
+  var seen=localStorage.getItem('lastSeenBizMsg')||'';
+  dot.style.display=(S.user&&t&&t>seen)?'block':'none';
+}
+function markMsgsSeen(){
+  var t=latestBizMsgTime();
+  if(t)localStorage.setItem('lastSeenBizMsg',t);
+  updateMsgDot();
 }
 VIEWS.messages = function(el){
   if(!S.user){
@@ -841,14 +862,16 @@ VIEWS.messages = function(el){
     +'<div class="msg-input-row"><input type="text" id="msg-body" placeholder="Type a message…" onkeydown="if(event.key===\'Enter\')sendMsg()"><button onclick="sendMsg()">Send</button></div>'
   +'</div>';
   window.scrollTo(0,document.body.scrollHeight);
+  markMsgsSeen();
   // fetch fresh now, then poll every 8s while this page is open
-  fetchMsgs().then(function(ch){if(ch&&_view==='messages')refreshMsgList();});
+  fetchMsgs().then(function(ch){markMsgsSeen();if(ch&&_view==='messages')refreshMsgList();});
   _msgPoll=setInterval(function(){
     if(_view!=='messages'){clearInterval(_msgPoll);_msgPoll=null;return;}
     fetchMsgs().then(function(ch){if(ch&&_view==='messages')refreshMsgList();});
   },8000);
 };
 function refreshMsgList(){
+  markMsgsSeen();
   var list=$('msg-list');
   if(!list)return;
   list.innerHTML=msgListHTML();
